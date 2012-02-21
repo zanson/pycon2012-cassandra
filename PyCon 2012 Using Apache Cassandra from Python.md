@@ -211,6 +211,7 @@ or install pycassa, and use it from there:
 #Using Composite Columns
 
 - Fun fun fun
+- [Schema Design](http://www.datastax.com/dev/blog/schema-in-cassandra-1-1)
 
 #Indexing in Cassandra
 
@@ -218,6 +219,8 @@ or install pycassa, and use it from there:
 - Roll your own with wide rows  
 - Composite Columns  
 - [Blog Post on this stuff][anuff]  
+- [Presentation on Indexing](http://www.slideshare.net/edanuff/indexing-in-cassandra)
+- [Another Post](http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/)  
 
 [datastaxIndexes]:http://www.datastax.com/dev/blog/whats-new-cassandra-07-secondary-indexes  
 [anuff]: http://www.anuff.com/2011/02/indexing-in-cassandra.html  
@@ -227,8 +230,8 @@ or install pycassa, and use it from there:
 - Native  
 	- Easy to use.  
 	- Let you use filtering queries.  
-	- More performant if the indexed column doesn't have a lot of different values.  
-		- a lot is hundreds of thousands/millions.  
+	- Not recommended for high cardinality values (i.e. timestamps, birth dates, keywords, etc.)  
+		- More performant if the indexed column doesn't have a lot of different values.  
 	- Make writes slower to indexed columns (read before write)  
 	- Usually fine as long as the indexed column is not under constant load.  
 - Rolling your own  
@@ -248,10 +251,10 @@ or install pycassa, and use it from there:
 
 #Lessons Learned
 
-- Use indexes.  Scanning key ranges isn't fun (or fast).  
+- Use indexes.  Don't iterate over keys.  
 - When you come up with a new query, come up with a schema to service it quickly.  
 - Don't be afraid to write your data to multiple places.  
-	-  batch insert is your friend.  
+	-  Batch insert is your friend.  
 - Run repair.  
 - Don't let your free disk space fall under the size of your largest column family.  
 - Key cache and row cache are nice, but having your files fit in the Linux OS disk cache is beter.  
