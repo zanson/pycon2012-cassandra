@@ -9,8 +9,8 @@ footer-top-right: Morningstar, Inc. http://www.morningstar.com
 footer-bottom-left: @jeremiahdjordan  
 footer-bottom-right: jeremiah.jordan@morningstar.com  
 
-# What is Apache Cassandra
-  
+# What is Apache Cassandra  
+
 A very brief introduction to Apache Cassandra:  
   
 - Column based key-value store (multi-level dictionary)  
@@ -24,170 +24,194 @@ A very brief introduction to Apache Cassandra:
 
 # Where do I get it?  
 
-From the Apache Cassandra project: [http://cassandra.apache.org/](http://cassandra.apache.org/)  
+From the Apache Cassandra project:  
+[http://cassandra.apache.org/](http://cassandra.apache.org/)  
 
-    $ wget http://apache-mirror-site/apache-cassandra-1.0.6.tar.gz
-    $ tar xzf apache-cassandra-1.0.6.tar.gz
-    $ cd apache-cassandra-1.0.6
+    $ wget http://apache-mirror-site/apache-cassandra-1.0.7.tar.gz
+    $ tar xzf apache-cassandra-1.0.7.tar.gz
+    $ cd apache-cassandra-1.0.7
 
-Or DataStax hosts some Debian and RedHat packages:
+Or DataStax hosts some Debian and RedHat packages:  
 [http://www.datastax.com/docs/1.0/install/install_package](http://www.datastax.com/docs/1.0/install/install_package)
 
-# How do I run it?
-- Edit cassandra.yaml  to change data/commit log locations from /var/cassandra/data and /var/cassandra/commitlog
-- Edit log4j-server.properties to change log the syslog location (default /var/log/cassandra/system.log)
+# How do I run it?  
 
-    $ cd apache-cassandra-1.0.6/bin
+- Edit cassandra.yaml  
+	- Change data/commit log locations (default /var/cassandra/data and /var/cassandra/commitlog)  
+- Edit log4j-server.properties  
+	- Change the log location/levels (default /var/log/cassandra/system.log)  
+
+### Start the server  
+    $ cd apache-cassandra-1.0.7/bin
     $ ./cassandra
 
-For unit testing, I usually move the cassandra.yaml and log4j-server.properties for be .in templates, and change the "cassandra" script to run those through sed  
+# Setup tips for local instances  
+
+- Rename the cassandra.yaml and log4j-server.properties to be templates  
+- Change the "cassandra" script to run them through sed  
+
+Add something like the following to set the folders to be under the install folder.  
 
     if [ ! -f "$CASSANDRA_CONF/cassandra.yaml" ]; then
-        echo "Generating Config File: $CASSANDRA_CONF/cassandra.yaml from $CASSANDRA_CONF/cassandra.yaml.in"
+        echo "Generating Config File: $CASSANDRA_CONF/cassandra.yaml \
+        from $CASSANDRA_CONF/cassandra.yaml.in"
         MYDIR="$( cd "${CASSANDRA_HOME}" && pwd )"
-        sed "s#\${CASSANDRA_HOME}#${MYDIR}#g" $CASSANDRA_CONF/cassandra.yaml.in > $CASSANDRA_CONF/cassandra.yaml
-        sed "s#\${CASSANDRA_HOME}#${MYDIR}#g" $CASSANDRA_CONF/log4j-server.properties.in > $CASSANDRA_CONF/log4j-server.properties
+        sed "s#\${CASSANDRA_HOME}#${MYDIR}#g" \
+        $CASSANDRA_CONF/cassandra.yaml.in > $CASSANDRA_CONF/cassandra.yaml
+        sed "s#\${CASSANDRA_HOME}#${MYDIR}#g" \
+        $CASSANDRA_CONF/log4j-server.properties.in > $CASSANDRA_CONF/log4j-server.properties
     fi
 
-# First create a "Table"
+# First create a "Table"  
+
 Use the Cassandra CLI to setup a keyspace and column family to hold our data
 
-    $ cd apache-cassandra-1.0.6/bin
+    $ cd apache-cassandra-1.0.7/bin
     $ ./cassandra-cli
-    Welcome to Cassandra CLI version 1.0.6
-    
-    Type 'help;' or '?' for help.
-    Type 'quit;' or 'exit;' to quit.
-    
     [default@unknown] connect localhost/9160;
     Connected to: "Test Cluster" on localhost/9160
-    
     [default@unknown] create keyspace Keyspace1
     ...	    with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy'
-    ...	    and strategy_options = {replication_factor:1};
-    ebf7f200-31f1-11e1-0000-242d50cf1fbf
-    Waiting for schema agreement...
-    ... schemas agree across the cluster
-    
+    ...	    and strategy_options = [{replication_factor:1}];
     [default@unknown] use Keyspace1;
-    Authenticated to keyspace: Keyspace1
-    
-    [default@Keyspace2] create column family Standard1
+    [default@Keyspace1] create column family Standard1
     ...	    and comparator = 'AsciiType';
-    69064210-31f2-11e1-0000-242d50cf1fbf
-    Waiting for schema agreement...
-    ... schemas agree across the cluster
 
-#Installing the Cassandra thrift API module
-You can either generate it yourself if you have thrift installed:  
+# Installing the Cassandra module  
+
+### Thrift
+Generate it yourself if you have thrift installed:  
 
     $ cd apache-cassandra-1.0.7/interface
     $ thrift --gen py --out=whereitgoes cassandra.thrift
-    $python -c "import whereitgoes.cassandra.constants;print whereitgoes.cassandra.constants.VERSION"
-    19.20.0
+    $ python -c "import whereitgoes.cassandra.constants"
 
-or install pycassa, and use it from there:  
+### Pycassa (or Thrift)
+Install pycassa, and use it from there:  
 
     $ pip install pycassa
-    $ python -c "import pycassa.cassandra.c10.constants;print pycassa.cassandra.c10.constants.VERSION"
-    19.18.0
+    $ python -c "import pycassa.cassandra.c10.constants"
 
-#Using Cassandra from the thrift API
+# Using Cassandra Thrift vs Pycassa  
 
-    from thrift.transport import TSocket, TTransport
+{% left %}
+### Thrift  
+
+    from thrift.transport import TSocket
+    from thrift.transport import TTransport
     from thrift.protocol import TBinaryProtocol
     from pycassa.cassandra.c10 import Cassandra
     from pycassa.cassandra.c10 import ttypes
 
-#Connecting
+{% end %}
 
-    socket = TSocket.TSocket('localhost', 9160)
-    transport = TTransport.TFramedTransport(socket)
-    protocol = TBinaryProtocol.TBinaryProtocolAccelerated(transport)
-    client = Cassandra.Client(protocol)
-    transport.open()
-    client.set_keyspace('Keyspace1')
-
-#Writing
-
-    import time
-    insertTime = long(time.time()*1e6)
-    dataToInsert = {'key1': {'Standard1': [ttypes.Mutation(
-                                            ttypes.ColumnOrSuperColumn(
-                                                ttypes.Column(name='Column1',
-                                                              value='SomeData',
-                                                              timestamp=insertTime,
-                                                              ttl=None)))]}}
-    client.batch_mutate(mutation_map=dataToInsert,
-                        consistency_level=ttypes.ConsistencyLevel.QUORUM)
-
-#Reading
-
-    readData = client.multiget_slice(keys=set(['key1']),
-                                     column_parent=ttypes.ColumnParent(
-                                        column_family='Standard1'),
-                                     predicate=ttypes.SlicePredicate(
-                                        column_names=['Column1']),
-                                     consistency_level=ttypes.ConsistencyLevel.QUORUM)
-    assert('key1' in readData)
-    assert(len(readData['key1']) == 1)
-    readColumn = readData['key1'][0].column
-    assert(readColumn.timestamp == insertTime)
-    assert(readColumn.name == 'Column1')
-    assert(readColumn.value == 'SomeData')
-    assert(readColumn.ttl == None)
-
-#Batch operations
-
-    dataToInsert = {'key1': {'Standard1': [ttypes.Mutation(
-                                            ttypes.ColumnOrSuperColumn(
-                                                ttypes.Column(name='Column2',
-                                                              value='SomeMoreData',
-                                                              timestamp=insertTime,
-                                                              ttl=None)))]},
-                    'key2': {'Standard1': [ttypes.Mutation(
-                                            ttypes.ColumnOrSuperColumn(
-                                                ttypes.Column(name='Column3',
-                                                              value='SomeOtherData',
-                                                              timestamp=insertTime,
-                                                              ttl=None)))]}}
-    client.batch_mutate(mutation_map=dataToInsert,
-                        consistency_level=ttypes.ConsistencyLevel.QUORUM)
-
-    readData = client.multiget_slice(keys=set(['key1', 'key2']),
-                                     column_parent=ttypes.ColumnParent(
-                                        column_family='Standard1'),
-                                     predicate=ttypes.SlicePredicate(
-                                        column_names=['Column1',
-                                                      'Column2',
-                                                      'Column3']),
-                                     consistency_level=ttypes.ConsistencyLevel.QUORUM)
-
-#Installing the pycassa module
-
-    pip install pycassa
-
-#Using Cassandra from the pycassa module
+{% right %}
+### Pycassa  
 
     from pycassa.pool import ConnectionPool
     from pycassa.columnfamily import ColumnFamily
 
-#Connecting
+{% end %}
 
-    pool = ConnectionPool('Keyspace1', ['localhost:9160'])
-    col_fam = ColumnFamily(pool, 'Standard1')
+# Connecting  
+{% left %}
+### Thrift  
 
-#Writing
+    socket =
+      TSocket.TSocket('localhost', 9160)
+    transport =
+      TTransport.TFramedTransport(socket)
+    protocol =
+      TBinaryProtocol.
+        TBinaryProtocolAccelerated(transport)
+    client =
+      Cassandra.Client(protocol)
+    transport.open()
+    client.set_keyspace('Keyspace1')
 
-    col_fam.insert('key3', {'Column4': 'PycassaData'})
+{% end %}
 
-#Reading
+{% right %}
+### Pycassa  
 
-    readData = col_fam.get('key3')    
-    col_fam.insert('key3', {'Column5':'PycassaData2', 'Column6':'PycassaData3'})
-    readData = col_fam.get('key3')
-    
-#Batch operations
+    pool =
+      ConnectionPool('Keyspace1',
+                     ['localhost:9160'])
+    col_fam =
+      ColumnFamily(pool,
+                   'Standard1')
+
+{% end %}
+
+# Writing  
+{% left %}
+### Thrift  
+
+    import time
+    insertTime = long(time.time()*1e6)
+    dataToInsert =
+      {'key1': {'Standard1': 
+                  [ttypes.Mutation(
+                     ttypes.ColumnOrSuperColumn(
+                       ttypes.Column(
+                         name='Column1',
+                         value='SomeData',
+                         timestamp=insertTime,
+                         ttl=None)))]}}
+    client.batch_mutate(
+      mutation_map=
+        dataToInsert,
+      consistency_level=
+        ttypes.ConsistencyLevel.QUORUM)
+
+{% end %}
+
+{% right %}
+### Pycassa  
+
+    col_fam.insert(
+      'key1',
+      {'Column1':
+         'PycassaData'})
+
+{% end %}
+
+# Reading  
+{% left %}
+### Thrift  
+
+    readData = client.multiget_slice(
+      keys=set(['key1']),
+      column_parent=
+        ttypes.ColumnParent(
+          column_family='Standard1'),
+      predicate=
+        ttypes.SlicePredicate(
+          column_names=['Column1']),
+      consistency_level=
+        ttypes.ConsistencyLevel.QUORUM)
+
+{% end %}
+
+{% right %}
+### Pycassa  
+
+    readData = col_fam.get(
+      'key1',
+      columns=['Column1'])
+
+{% end %}
+
+# Deleting  
+
+### Pycassa  
+
+    col_fam.remove('key1', ['Column2'])
+    col_fam.remove('key2')
+
+# Batch operations  
+
+### Pycassa  
 
     col_fam.batch_insert({'key4': {'Column1': 'PycassaData4', 
                                    'Column2': 'PycassaData5',
@@ -195,61 +219,118 @@ or install pycassa, and use it from there:
                                    'Column4': 'PycassaData7',
                                    'Column5': 'PycassaData8'},
                           'key5': {'Column7': 'PycassaData9'}})
-    readData = col_fam.multiget(['key3', 'key4', 'key5'])
+
+### Or  
+
+    b = cf.batch(queue_size=10)
+    b.insert('key1', {'Column1':'value11', 'Column2':'value21'})
+    b.insert('key2', {'Column1':'value12', 'Column2':'value22'}, ttl=15)
+    b.remove('key1', ['Column2'])
+    b.remove('key2')
+    b.send()
+    
+    readData = col_fam.multiget(['key1', 'key2', 'key3', 'key4', 'key5'])
     readData = col_fam.multiget(['key3', 'key4', 'key5'], columns=['Column1', 'Column7'])
 
-#Column Slices
+
+# Column Slices  
+
+### Pycassa  
 
     readData = col_fam.get('key4', column_start='Column2', column_finish='Column4')
     readData = col_fam.get('key4', column_reversed=True, column_count=3)    
 
-#Types
+# Types  
 
-- Column Family Mapper
-- Auto type conversion
+	import pycassa.types
 
-#Using Composite Columns
+# Column Family Mapper
 
-- Fun fun fun
+    from pycassa.types import *
+    class User(object):
+         key = LexicalUUIDType()
+         name = Utf8Type()
+         age = IntegerType()
+         height = FloatType()
+         score = DoubleType(default=0.0)
+         joined = DateType()
+
+    from pycassa.columnfamilymap import ColumnFamilyMap
+    cfmap = ColumnFamilyMap(User, pool, 'users')
+
+# Inserting using the mapper
+
+    from datetime import datetime
+    import uuid
+    key = uuid.uuid4()
+    
+    user = User()
+    user.key = key
+    user.name = 'John'
+    user.age = 18
+    user.height = 5.9
+    user.joined = datetime.now()
+    cfmap.insert(user)    
+
+# Getting it back out
+
+    user = cfmap.get(key)
+    print user.name
+    # "John"
+    print user.age
+    # 18
+    users = cfmap.multiget([key1, key2])
+    print users[0].name
+    # "John"
+    for user in cfmap.get_range():
+        print user.name
+    # "John"
+    # "Bob"
+    # "Alex"
+
+# Deleting
+
+    cfmap.remove(user)
+    cfmap.get(user.key)
+    # cassandra.ttypes.NotFoundException: NotFoundException()
+
+# Using Composite Columns  
+
 - [Schema Design](http://www.datastax.com/dev/blog/schema-in-cassandra-1-1)
 
-#Indexing in Cassandra
+# Indexing in Cassandra  
 
-- [Native secondary indexes][datastaxIndexes] [Documentation](http://www.datastax.com/docs/1.0/ddl/indexes)  
+- [Native secondary indexes][dsBlog] [Documentation @ DataStax][dsDocs]  
 - Roll your own with wide rows  
 - Composite Columns  
-- [Blog Post on this stuff][anuff]  
-- [Presentation on Indexing](http://www.slideshare.net/edanuff/indexing-in-cassandra)
-- [Another Post](http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/)  
 
-[datastaxIndexes]:http://www.datastax.com/dev/blog/whats-new-cassandra-07-secondary-indexes  
-[anuff]: http://www.anuff.com/2011/02/indexing-in-cassandra.html  
+[dsBlog]: http://www.datastax.com/dev/blog/whats-new-cassandra-07-secondary-indexes  
+[dsDocs]: http://www.datastax.com/docs/1.0/ddl/indexes  
 
-#Native vs Rolling your own
+# Some links about indexing  
 
-- Native  
-	- Easy to use.  
-	- Let you use filtering queries.  
-	- Not recommended for high cardinality values (i.e. timestamps, birth dates, keywords, etc.)  
-		- More performant if the indexed column doesn't have a lot of different values.  
-	- Make writes slower to indexed columns (read before write)  
-	- Usually fine as long as the indexed column is not under constant load.  
-- Rolling your own  
-	- Have to take care of removing changed values yourself.  
-	- If you know the new value doesn't exists, no read before write (faster).  
-	- Can design the index to return needed information so that it becomes a denomalized query, not just an index.  
-	- Can use things like composite columns, and other tricks to allow range like searches.  
-	- Can index in other ways then just column values.  
+- [Blog post going through some options.](http://www.anuff.com/2011/02/indexing-in-cassandra.html)  
+- [Presentation on indexing.](http://www.slideshare.net/edanuff/indexing-in-cassandra)
+- [Another blog post describing different patterns for indexing.](http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/)  
 
-#Setting up native indexes
+# Native Indexes  
 
-	abc def g
+- Easy to use.  
+- Let you use filtering queries.  
+- Usually fine as long as the indexed column is not under constant load.  
+- Not recommended for high cardinality values (i.e. timestamps, birth dates, keywords, etc.)  
+	- More performant if the indexed column doesn't have a lot of different values.  
+- Make writes slower to indexed columns (read before write)  
 
-#How to use them from pycassa
+# Rolling your own  
 
-	col_fam.get_indexed
+- Have to take care of removing changed values yourself.  
+- If you know the new value doesn't exists, no read before write (faster).  
+- Can design the index to return needed information so that it becomes a denomalized query, not just an index.  
+- Can use things like composite columns, and other tricks to allow range like searches.  
+- Can index in other ways then just column values.  
 
-#Lessons Learned
+# Lessons Learned
 
 - Use indexes.  Don't iterate over keys.  
 - When you come up with a new query, come up with a schema to service it quickly.  

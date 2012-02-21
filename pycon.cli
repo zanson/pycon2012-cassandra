@@ -8,3 +8,5 @@ use Keyspace1;
 
 create column family Standard1
     and comparator = 'AsciiType';
+create column family Users
+    and comparator = 'TimeUUIDType';

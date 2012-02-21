@@ -123,8 +123,47 @@ if __name__ == '__main__':
 
 #Types
 
+    from pycassa.types import *
+    class User(object):
+         key = AsciiType()
+         name = UTF8Type()
+         age = IntegerType()
+         height = FloatType()
+         score = DoubleType(default=0.0)
+         joined = DateType()
 
+    from pycassa.columnfamilymap import ColumnFamilyMap
+    cfmap = ColumnFamilyMap(User, pool, 'Standard1')
 
+    from datetime import datetime
+    import uuid
+    key = str(uuid.uuid4())
+    
+    user = User()
+    user.key = key
+    user.name = 'John'
+    user.age = 18
+    user.height = 5.9
+    user.joined = datetime.now()
+    cfmap.insert(user)
+    
+    user = cfmap.get(key=key)
+    print user.name
+    # "John"
+    print user.age
+    # 18
+    users = cfmap.multiget([key1, key2])
+    print users[0].name
+    # "John"
+    for user in cfmap.get_range():
+        print user.name
+    # "John"
+    # "Bob"
+    # "Alex"
+    cfmap.remove(user)
+    cfmap.get(user.key)
+    # cassandra.ttypes.NotFoundException: NotFoundException()
+    
 #Key Slices
     readData = col_fam.get_range(start='', finish='')
     readData = list(readData)
@@ -150,4 +189,7 @@ if __name__ == '__main__':
     readData = list(readData)
     print len(readData)
     prettyprint.pp(readData)
+    
+    
+    
 
