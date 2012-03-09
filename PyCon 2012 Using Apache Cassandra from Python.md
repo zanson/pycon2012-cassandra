@@ -2,30 +2,69 @@ Title: PyCon 2012 Using Apache Cassandra from Python
 Subtitle: Jeremiah Jordan, Morningstar, Inc. http://www.morningstar.com  
 Author: Jeremiah Jordan  
 Company: Morningstar, Inc. http://www.morningstar.com  
-Email: jeremiah.jordan@morningstar.com  
+Email: jeremiah.jordan@morningstar.com
 Twitter: @jeremiahdjordan  
-presdate: 2012-03-14  
+presdate: 2012-03-09  
+footer: Jeremiah Jordan, Morningstar, Inc. http://www.morningstar.com  
 footer-top-right: Morningstar, Inc. http://www.morningstar.com  
 footer-bottom-left: @jeremiahdjordan  
-footer-bottom-right: jeremiah.jordan@morningstar.com  
+footer-bottom-right: jeremiah.jordan@morningstar.com
 
-# What is Apache Cassandra  
-
-A very brief introduction to Apache Cassandra:  
+# Using Apache Cassandra from Python  
   
+### Jeremiah Jordan, Morningstar, Inc.  
+
+### http://www.morningstar.com 
+
+# Why are you here?  
+
+- You were too lazy to get out of your seat.  
+- Someone said NoSQL.  
+- You want to learn about using Cassandra from Python.  
+
+# What am I going to talk about?  
+
+- What is Cassandra.  
+- How do you use Cassandra from Python.  
+- Indexing and why it is important.  
+- Some concepts to keep in mind when using Cassandra.  
+
+# What am I not going to talk about?  
+
+- Setting up and maintaining a production Cassandra cluster.  
+
+# What is Apache Cassandra?  
+
 - Column based key-value store (multi-level dictionary)  
 - Combination of [Dynamo (Amazon)][dynamo] and [BigTable (Google)][bigtable]  
-- Schema-optional  
+- Schema-optional data store.    
+
+# Buzz word description.  
 
 "Cassandra is a highly scalable, eventually consistent, distributed, structured key-value store. Cassandra brings together the distributed systems technologies from [Dynamo][dynamo]  and the data model from Google's [BigTable][bigtable]. Like Dynamo, Cassandra is eventually consistent. Like BigTable, Cassandra provides a ColumnFamily-based data model richer than typical key/value systems." From the [Cassandra Wiki](http://wiki.apache.org/cassandra/ "Cassandra Wiki")
 
 [dynamo]: http://s3.amazonaws.com/AllThingsDistributed/sosp/amazon-dynamo-sosp2007.pdf "Amazon Dynamo Paper"  
 [bigtable]: http://labs.google.com/papers/bigtable-osdi06.pdf "Google BigTable Paper"
 
+# Column based key-value store (multi-level dictionary)  
+
+![Keyspace Diagram](./KeyspacePicture.png "Keyspace Diagram")  
+
+# Multi-level Dictionary
+    {"UserInfo": {"John": {"age": 32,
+                           "email": "john@gmail.com",
+                           "gender": "M",
+                           "state": "IL"}}}
+# Well really this
+    {"UserInfo": {"John": OrderedDict([("age", 32), 
+                                       ("email", "john@gmail.com"),
+                                       ("gender", "M"),
+                                       ("state", "IL")])}}
+
 # Where do I get it?  
 
 From the Apache Cassandra project:  
-[http://cassandra.apache.org/](http://cassandra.apache.org/)  
+[http://cassandra.apache.org/](http://cassandra.apache.org/) 
 
     $ wget http://apache-mirror-site/apache-cassandra-1.0.7.tar.gz
     $ tar xzf apache-cassandra-1.0.7.tar.gz
@@ -38,8 +77,8 @@ Or DataStax hosts some Debian and RedHat packages:
 
 - Edit cassandra.yaml  
 	- Change data/commit log locations (default /var/cassandra/data and /var/cassandra/commitlog)  
-- Edit log4j-server.properties  
-	- Change the log location/levels (default /var/log/cassandra/system.log)  
+- Edit log4j-server.properties 
+	- Change the log location/levels (default /var/log/cassandra/system.log) 
 
 ### Start the server  
     $ cd apache-cassandra-1.0.7/bin
@@ -242,7 +281,12 @@ Install pycassa, and use it from there:
 
 # Types  
 
-	import pycassa.types
+    from pycassa.types import *
+    col_fam.column_validators['IntColumn5'] = IntegerType()
+    col_fam.column_validators['IntColumn6'] = IntegerType()    
+    col_fam.insert('intData', {'IntColumn5':5, 'IntColumn6':6})
+    print col_fam.get('intData')
+    # OrderedDict([('IntColumn5', 5), ('IntColumn6', 6)])
 
 # Column Family Mapper
 
@@ -294,24 +338,24 @@ Install pycassa, and use it from there:
     cfmap.get(user.key)
     # cassandra.ttypes.NotFoundException: NotFoundException()
 
-# Using Composite Columns  
-
-- [Schema Design](http://www.datastax.com/dev/blog/schema-in-cassandra-1-1)
-
 # Indexing in Cassandra  
 
 - [Native secondary indexes][dsBlog] [Documentation @ DataStax][dsDocs]  
-- Roll your own with wide rows  
+- Roll your own with wide rows 
 - Composite Columns  
 
 [dsBlog]: http://www.datastax.com/dev/blog/whats-new-cassandra-07-secondary-indexes  
 [dsDocs]: http://www.datastax.com/docs/1.0/ddl/indexes  
 
 # Some links about indexing  
+There is a lot of stuff out there about indexing...  
 
-- [Blog post going through some options.](http://www.anuff.com/2011/02/indexing-in-cassandra.html)  
-- [Presentation on indexing.](http://www.slideshare.net/edanuff/indexing-in-cassandra)
-- [Another blog post describing different patterns for indexing.](http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/)  
+- Blog post going through some options.  
+[http://www.anuff.com/2011/02/indexing-in-cassandra.html](http://www.anuff.com/2011/02/indexing-in-cassandra.html)  
+- Presentation on indexing.  
+[http://www.slideshare.net/edanuff/indexing-in-cassandra](http://www.slideshare.net/edanuff/indexing-in-cassandra)
+- Another blog post describing different patterns for indexing.  
+[http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/](http://pkghosh.wordpress.com/2011/03/02/cassandra-secondary-index-patterns/)  
 
 # Native Indexes  
 

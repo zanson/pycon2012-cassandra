@@ -104,6 +104,13 @@ if __name__ == '__main__':
     readData = col_fam.get('key3')    
     col_fam.insert('key3', {'Column5':'PycassaData2', 'Column6':'PycassaData3'})
     readData = col_fam.get('key3')
+
+    from pycassa.types import *
+    col_fam.column_validators['IntColumn5'] = IntegerType()
+    col_fam.column_validators['IntColumn6'] = IntegerType()    
+    col_fam.insert('intData', {'IntColumn5':5, 'IntColumn6':6})
+    print col_fam.get('intData')
+    # OrderedDict([('IntColumn5', 5), ('IntColumn6', 6)])
     
 #Batch operations
 
@@ -123,72 +130,73 @@ if __name__ == '__main__':
 
 #Types
 
-    from pycassa.types import *
-    class User(object):
-         key = AsciiType()
-         name = UTF8Type()
-         age = IntegerType()
-         height = FloatType()
-         score = DoubleType(default=0.0)
-         joined = DateType()
-
-    from pycassa.columnfamilymap import ColumnFamilyMap
-    cfmap = ColumnFamilyMap(User, pool, 'Standard1')
-
-    from datetime import datetime
-    import uuid
-    key = str(uuid.uuid4())
-    
-    user = User()
-    user.key = key
-    user.name = 'John'
-    user.age = 18
-    user.height = 5.9
-    user.joined = datetime.now()
-    cfmap.insert(user)
-    
-    user = cfmap.get(key=key)
-    print user.name
-    # "John"
-    print user.age
-    # 18
-    users = cfmap.multiget([key1, key2])
-    print users[0].name
-    # "John"
-    for user in cfmap.get_range():
-        print user.name
-    # "John"
-    # "Bob"
-    # "Alex"
-    cfmap.remove(user)
-    cfmap.get(user.key)
-    # cassandra.ttypes.NotFoundException: NotFoundException()
+#     from pycassa.types import *
+#     class User(object):
+#          key = AsciiType()
+#          name = UTF8Type()
+#          age = IntegerType()
+#          height = FloatType()
+#          score = DoubleType(default=0.0)
+#          joined = DateType()
+# 
+#     from pycassa.columnfamilymap import ColumnFamilyMap
+#     cfmap = ColumnFamilyMap(User, pool, 'Standard1')
+# 
+#     from datetime import datetime
+#     import uuid
+#     key = str(uuid.uuid4())
+#     
+#     user = User()
+#     user.key = key
+#     user.name = 'John'
+#     user.age = 18
+#     user.height = 5.9
+#     user.joined = datetime.now()
+#     cfmap.insert(user)
+#     
+#     user = cfmap.get(key=key)
+#     print user.name
+#     # "John"
+#     print user.age
+#     # 18
+#     users = cfmap.multiget([key1, key2])
+#     print users[0].name
+#     # "John"
+#     for user in cfmap.get_range():
+#         print user.name
+#     # "John"
+#     # "Bob"
+#     # "Alex"
+#     cfmap.remove(user)
+#     cfmap.get(user.key)
+#     # cassandra.ttypes.NotFoundException: NotFoundException()
     
 #Key Slices
     readData = col_fam.get_range(start='', finish='')
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    print readData
+    #prettyprint.pp(readData)
     readData = col_fam.get_range(start='', finish='', row_count=2)
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    #prettyprint.pp(readData)
     readData = col_fam.get_range(start=list(readData)[-1][0], finish='', row_count=2)
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    #prettyprint.pp(readData)
     readData = col_fam.get_range(start=list(readData)[-1][0], finish='', row_count=2)
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    #prettyprint.pp(readData)
     readData = col_fam.get_range(start=list(readData)[-1][0], finish='', row_count=2)
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    #prettyprint.pp(readData)
     readData = col_fam.get_range(start=list(readData)[-1][0], finish='', row_count=2)
     readData = list(readData)
     print len(readData)
-    prettyprint.pp(readData)
+    #prettyprint.pp(readData)
     
     
     

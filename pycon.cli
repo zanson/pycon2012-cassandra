@@ -1,12 +1,13 @@
 connect localhost/9160;
 
-create keyspace Keyspace1
+create keyspace ApplicationData
     with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy'
     and strategy_options = [{replication_factor:1}];
 
-use Keyspace1;
+use ApplicationData;
 
-create column family Standard1
+create column family UserInfo
     and comparator = 'AsciiType';
-create column family Users
+    
+create column family ChangesOverTime
     and comparator = 'TimeUUIDType';
